@@ -1,11 +1,10 @@
 CREATE TABLE public."Items"
 (
-    "IdItem" bigserial,
+    "IdItem" bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     "IdOrder" bigint NOT NULL,
     "IdProduct" bigint NOT NULL,
     "Quantity" int,
     "Total" numeric(10, 2),
-    PRIMARY KEY ("IdItem"),
     CONSTRAINT "ForeignKeyItemsOrders" FOREIGN KEY ("IdOrder")
         REFERENCES public."Orders" ("IdOrder") MATCH SIMPLE
         ON UPDATE NO ACTION

@@ -1,6 +1,6 @@
 CREATE TABLE public."Orders"
 (
-    "IdOrder" bigserial,
+    "IdOrder" bigint GENERATED ALWAYS AS IDENTITY,
     "IdCustomer" bigint NOT NULL,
     "OrderDate" timestamp(0) without time zone NOT NULL,
     "ShipDate" timestamp(0) without time zone,

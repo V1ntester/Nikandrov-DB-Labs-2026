@@ -1,6 +1,6 @@
 CREATE TABLE public."Customers"
 (
-    "IdCustomer" bigserial,
+    "IdCustomer" bigint GENERATED ALWAYS AS IDENTITY,
     "CompanyName" character varying(255),
     "LastName" character varying(100) NOT NULL,
     "FirstName" character varying(100) NOT NULL,
@@ -10,8 +10,7 @@ CREATE TABLE public."Customers"
     "Phone" character varying(20),
     "E-Mail" character varying(255),
     PRIMARY KEY ("IdCustomer"),
-    CONSTRAINT "UniqueLastName" UNIQUE ("LastName")
-    CONSTRAINT "UniqueFirstName" UNIQUE ("FirstName")
+    CONSTRAINT "UniqueName" UNIQUE ("LastName", "FirstName")
 );
 
 ALTER TABLE IF EXISTS public."Customers"
