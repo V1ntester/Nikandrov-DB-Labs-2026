@@ -5,5 +5,5 @@ CREATE TABLE public."Products"
     "PrPrice" numeric(10, 2),
     "InStock" int,
     "ReOrder" int, 
-    "Description" text,
+    "Description" text
 );
