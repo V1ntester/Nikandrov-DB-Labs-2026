@@ -1,0 +1,3 @@
+SELECT *
+FROM public."Products"
+WHERE "PrPrice" BETWEEN 5000 AND 10000;
