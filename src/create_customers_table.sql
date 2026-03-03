@@ -1,6 +1,6 @@
 CREATE TABLE public."Customers"
 (
-    "IdCustomer" bigint GENERATED ALWAYS AS IDENTITY,
+    "IdCustomer" bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     "CompanyName" character varying(255),
     "LastName" character varying(100) NOT NULL,
     "FirstName" character varying(100) NOT NULL,
@@ -9,7 +9,6 @@ CREATE TABLE public."Customers"
     "IndexCode" character varying(10),
     "Phone" character varying(20),
     "E-Mail" character varying(255),
-    PRIMARY KEY ("IdCustomer"),
     CONSTRAINT "UniqueName" UNIQUE ("LastName", "FirstName")
 );
 
