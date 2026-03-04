@@ -2,5 +2,5 @@ SELECT "LastName", "FirstName", "Phone", "E-Mail", "City", "Address", "Status", 
 FROM public."Customers" c
 JOIN public."Orders" o
 ON c."IdCustomer" = o."IdCustomer"
-WHERE o."ShipDate" IS NULL AND NOW() - o."PaidDate" > INTERVAL '10 days'
+WHERE o."ShipDate" IS NULL AND NOW() - o."PaidDate" > INTERVAL '10 days' AND o."Status" = 'P'
 ORDER BY c."City", c."LastName";
