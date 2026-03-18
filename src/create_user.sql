@@ -1,0 +1,2 @@
+CREATE USER user1 WITH
+PASSWORD 'root';
