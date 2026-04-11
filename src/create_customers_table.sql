@@ -1,3 +1,4 @@
+-- Created using PgAdmin 4
 CREATE TABLE public."Customers"
 (
     "IdCustomer" bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,

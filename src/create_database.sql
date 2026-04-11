@@ -1,3 +1,4 @@
+-- Created using PgAdmin 4
 CREATE DATABASE sales
     WITH
     OWNER = postgres
