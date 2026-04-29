@@ -4,6 +4,11 @@
 #include <QSqlError>
 #include <QMessageBox>
 #include <QSqlQuery>
+#include <QTableWidgetItem>
+
+#include <memory>
+
+#include "additionalwindow.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow)
@@ -17,6 +22,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->btnEdit, SIGNAL(clicked(bool)), this, SLOT(update()));
     connect(ui->btnDel, SIGNAL(clicked(bool)), this, SLOT(remove()));
     connect(ui->twOrg, SIGNAL(itemSelectionChanged()), this, SLOT(onSelectionChanged()));
+connect(ui->twOrg, SIGNAL(itemDoubleClicked(QTableWidgetItem*)), 
+        this, SLOT(onDoubleClicked(QTableWidgetItem*)));
 
     ui->twOrg->setColumnCount(4);
 
@@ -51,13 +58,15 @@ MainWindow::MainWindow(QWidget *parent)
     ui->twEmployees->horizontalHeader()->setStretchLastSection(true);
 
     ui->twEmployees->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+    d_dbconn = std::make_shared<QSqlDatabase>();
 }
 
 MainWindow::~MainWindow()
 {
-    if (dbconn.isOpen())
+    if (d_dbconn->isOpen())
     {
-        dbconn.close();
+        d_dbconn->close();
     }
 
     delete ui;
@@ -65,26 +74,26 @@ MainWindow::~MainWindow()
 
 void MainWindow::dbconnect()
 {
-    if (!dbconn.isOpen())
+    if (!d_dbconn->isOpen())
     {
         ui->teResult->append("SQL drivers:");
         ui->teResult->append(QSqlDatabase::drivers().join(","));
 
-        dbconn = QSqlDatabase::addDatabase("QPSQL");
+        *d_dbconn = QSqlDatabase::addDatabase("QPSQL");
 
-        dbconn.setDatabaseName("dbtest");
-        dbconn.setHostName("localhost");
-        dbconn.setUserName("postgres");
-        dbconn.setPassword("root");
+        d_dbconn->setDatabaseName("dbtest");
+        d_dbconn->setHostName("localhost");
+        d_dbconn->setUserName("postgres");
+        d_dbconn->setPassword("root");
 
-        if (dbconn.open())
+        if (d_dbconn->open())
         {
             ui->teResult->append("Connect is open...");
         }
         else
         {
             ui->teResult->append("Error of connect:");
-            ui->teResult->append(dbconn.lastError().text());
+            ui->teResult->append(d_dbconn->lastError().text());
         }
     }
     else
@@ -95,17 +104,17 @@ void MainWindow::dbconnect()
 
 void MainWindow::create()
 {
-    if (!dbconn.isOpen())
+    if (!d_dbconn->isOpen())
     {
         dbconnect();
-        if (!dbconn.isOpen())
+        if (!d_dbconn->isOpen())
         {
-            QMessageBox::critical(this, "Error", dbconn.lastError().text());
+            QMessageBox::critical(this, "Error", d_dbconn->lastError().text());
             return;
         }
     }
 
-    QSqlQuery query(dbconn);
+    QSqlQuery query(*d_dbconn);
 
     QString sqlstr = "INSERT INTO org (abbr, title, city, inn) VALUES (?,?,?,?)";
 
@@ -131,17 +140,17 @@ void MainWindow::selectAll()
 {
     ui->twOrg->clearContents();
 
-    if (!dbconn.isOpen())
+    if (!d_dbconn->isOpen())
     {
         dbconnect();
     }
-    if (!dbconn.isOpen())
+    if (!d_dbconn->isOpen())
     {
-        QMessageBox::critical(this, "Error", dbconn.lastError().text());
+        QMessageBox::critical(this, "Error", d_dbconn->lastError().text());
         return;
     }
 
-    QSqlQuery query(dbconn);
+    QSqlQuery query(*d_dbconn);
 
     QString sqlstr = "SELECT * FROM org";
 
@@ -165,7 +174,7 @@ void MainWindow::selectAll()
     ui->twOrg->setSortingEnabled(false);
 
     int i = 0;
-    
+
     while (query.next())
     {
         ui->twOrg->setItem(i, 0, new QTableWidgetItem(query.value("abbr").toString()));
@@ -182,16 +191,16 @@ void MainWindow::selectAll()
 void MainWindow::update()
 {
 
-    if (!dbconn.isOpen())
+    if (!d_dbconn->isOpen())
     {
         dbconnect();
-        if (!dbconn.isOpen())
+        if (!d_dbconn->isOpen())
         {
-            QMessageBox::critical(this, "Error", dbconn.lastError().text());
+            QMessageBox::critical(this, "Error", d_dbconn->lastError().text());
             return;
         }
     }
-    QSqlQuery query(dbconn);
+    QSqlQuery query(*d_dbconn);
 
     QString sqlstr = "UPDATE org SET title = ?, city = ?, inn = ? WHERE abbr = ?";
 
@@ -215,13 +224,13 @@ void MainWindow::update()
 
 void MainWindow::remove()
 {
-    if (!dbconn.isOpen())
+    if (!d_dbconn->isOpen())
     {
         dbconnect();
 
-        if (!dbconn.isOpen())
+        if (!d_dbconn->isOpen())
         {
-            QMessageBox::critical(this, "Error", dbconn.lastError().text());
+            QMessageBox::critical(this, "Error", d_dbconn->lastError().text());
             return;
         }
     }
@@ -240,7 +249,7 @@ void MainWindow::remove()
         return;
     }
 
-    QSqlQuery query(dbconn);
+    QSqlQuery query(*d_dbconn);
 
     QString sqlstr = "DELETE FROM org WHERE abbr = ?";
 
@@ -273,17 +282,17 @@ void MainWindow::onSelectionChanged()
 
     ui->twEmployees->clearContents();
 
-    if (!dbconn.isOpen())
+    if (!d_dbconn->isOpen())
     {
         dbconnect();
     }
-    if (!dbconn.isOpen())
+    if (!d_dbconn->isOpen())
     {
-        QMessageBox::critical(this, "Error", dbconn.lastError().text());
+        QMessageBox::critical(this, "Error", d_dbconn->lastError().text());
         return;
     }
 
-    QSqlQuery query(dbconn);
+    QSqlQuery query(*d_dbconn);
     QString sqlstr = "SELECT * FROM employees WHERE abbr = ?";
 
     query.prepare(sqlstr);
@@ -316,4 +325,14 @@ void MainWindow::onSelectionChanged()
 
         i++;
     }
+}
+
+void MainWindow::onDoubleClicked(QTableWidgetItem* item) {
+    if (!item) { return; }
+    
+    int row = item->row();
+
+    AdditionalWindow *additionalWindow = new AdditionalWindow(d_dbconn, ui->twOrg->item(row, 0)->text());
+
+    additionalWindow->show();
 }

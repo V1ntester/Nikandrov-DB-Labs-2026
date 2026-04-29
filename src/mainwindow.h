@@ -3,6 +3,9 @@
 
 #include <QMainWindow>
 #include <QSqlDatabase>
+#include <QTableWidgetItem>
+
+#include <memory>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -28,12 +31,14 @@ public slots:
     void update();
     /// @brief removes selected entry
     void remove();
-    /// @brief inserts text into the data form and selects data for employess table
+    /// @brief inserts text into the data form and selects data for employees table
     void onSelectionChanged();
+    /// @brief open additional window with data from eployees table
+    void onDoubleClicked(QTableWidgetItem* item);
 
 private:
     Ui::MainWindow *ui;
 
-    QSqlDatabase dbconn;
+    std::shared_ptr<QSqlDatabase> d_dbconn;
 };
 #endif // MAINWINDOW_H
