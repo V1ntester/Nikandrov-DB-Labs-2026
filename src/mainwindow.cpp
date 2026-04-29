@@ -36,12 +36,30 @@ MainWindow::MainWindow(QWidget *parent)
     ui->twOrg->sortByColumn(0, Qt::AscendingOrder);
 
     ui->twOrg->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+    ui->twEmployees->setColumnCount(3);
+
+    ui->twEmployees->setAutoScroll(true);
+
+    ui->twEmployees->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->twEmployees->setSelectionBehavior(QAbstractItemView::SelectRows);
+
+    ui->twEmployees->setHorizontalHeaderItem(0, new QTableWidgetItem("Email"));
+    ui->twEmployees->setHorizontalHeaderItem(1, new QTableWidgetItem("Full Name"));
+    ui->twEmployees->setHorizontalHeaderItem(2, new QTableWidgetItem("Position"));
+
+    ui->twEmployees->horizontalHeader()->setStretchLastSection(true);
+
+    ui->twEmployees->setEditTriggers(QAbstractItemView::NoEditTriggers);
 }
 
 MainWindow::~MainWindow()
 {
     if (dbconn.isOpen())
+    {
         dbconn.close();
+    }
+
     delete ui;
 }
 
@@ -86,16 +104,15 @@ void MainWindow::create()
             return;
         }
     }
+
     QSqlQuery query(dbconn);
 
     QString sqlstr = "INSERT INTO org (abbr, title, city, inn) VALUES (?,?,?,?)";
 
     query.prepare(sqlstr);
-
     query.bindValue(0, ui->leAbbr->text());
     query.bindValue(1, ui->teTitle->toPlainText());
     query.bindValue(2, ui->leCity->text());
-
     query.bindValue(3, ui->leInn->text().toLongLong());
 
     if (!query.exec())
@@ -112,7 +129,6 @@ void MainWindow::create()
 
 void MainWindow::selectAll()
 {
-
     ui->twOrg->clearContents();
 
     if (!dbconn.isOpen())
@@ -149,12 +165,14 @@ void MainWindow::selectAll()
     ui->twOrg->setSortingEnabled(false);
 
     int i = 0;
+    
     while (query.next())
     {
         ui->twOrg->setItem(i, 0, new QTableWidgetItem(query.value("abbr").toString()));
         ui->twOrg->setItem(i, 1, new QTableWidgetItem(query.value("title").toString()));
         ui->twOrg->setItem(i, 2, new QTableWidgetItem(query.value("city").toString()));
         ui->twOrg->setItem(i, 3, new QTableWidgetItem(query.value("inn").toString()));
+
         i++;
     }
 
@@ -178,7 +196,6 @@ void MainWindow::update()
     QString sqlstr = "UPDATE org SET title = ?, city = ?, inn = ? WHERE abbr = ?";
 
     query.prepare(sqlstr);
-
     query.bindValue(0, ui->teTitle->toPlainText());
     query.bindValue(1, ui->leCity->text());
     query.bindValue(2, ui->leInn->text().toLongLong());
@@ -225,9 +242,12 @@ void MainWindow::remove()
 
     QSqlQuery query(dbconn);
 
-    QString sqlstr = "DELETE FROM org WHERE abbr = '" + ui->twOrg->item(currow, 0)->text() + "'";
+    QString sqlstr = "DELETE FROM org WHERE abbr = ?";
 
-    if (!query.exec(sqlstr))
+    query.prepare(sqlstr);
+    query.bindValue(0, ui->twOrg->item(currow, 0)->text());
+
+    if (!query.exec())
     {
         ui->teResult->append(query.lastQuery());
         QMessageBox::critical(this, "Error", query.lastError().text());
@@ -242,6 +262,7 @@ void MainWindow::remove()
 void MainWindow::onSelectionChanged()
 {
     int row = ui->twOrg->currentRow();
+
     if (row < 0)
         return;
 
@@ -249,4 +270,50 @@ void MainWindow::onSelectionChanged()
     ui->teTitle->setPlainText(ui->twOrg->item(row, 1)->text());
     ui->leCity->setText(ui->twOrg->item(row, 2)->text());
     ui->leInn->setText(ui->twOrg->item(row, 3)->text());
+
+    ui->twEmployees->clearContents();
+
+    if (!dbconn.isOpen())
+    {
+        dbconnect();
+    }
+    if (!dbconn.isOpen())
+    {
+        QMessageBox::critical(this, "Error", dbconn.lastError().text());
+        return;
+    }
+
+    QSqlQuery query(dbconn);
+    QString sqlstr = "SELECT * FROM employees WHERE abbr = ?";
+
+    query.prepare(sqlstr);
+    query.bindValue(0, ui->twOrg->item(row, 0)->text());
+
+    if (!query.exec())
+    {
+        QMessageBox::critical(this, "Error", query.lastError().text());
+        return;
+    }
+
+    if (query.isActive())
+    {
+        ui->twEmployees->setRowCount(query.size());
+    }
+    else
+    {
+        ui->twEmployees->setRowCount(0);
+    }
+
+    ui->teResult->append(QString("Read %1 rows " + ui->twOrg->item(row, 0)->text()).arg(query.size()));
+
+    int i = 0;
+
+    while (query.next())
+    {
+        ui->twEmployees->setItem(i, 0, new QTableWidgetItem(query.value("email").toString()));
+        ui->twEmployees->setItem(i, 1, new QTableWidgetItem(query.value("full_name").toString()));
+        ui->twEmployees->setItem(i, 2, new QTableWidgetItem(query.value("position").toString()));
+
+        i++;
+    }
 }

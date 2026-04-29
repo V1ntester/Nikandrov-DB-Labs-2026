@@ -28,7 +28,7 @@ public slots:
     void update();
     /// @brief removes selected entry
     void remove();
-    /// @brief inserts text into the data form
+    /// @brief inserts text into the data form and selects data for employess table
     void onSelectionChanged();
 
 private:
